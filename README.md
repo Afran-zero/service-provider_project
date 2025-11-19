@@ -197,58 +197,91 @@ def login_required(f):
 
 ```
 service-provider/
-├── README.md                        # This file - comprehensive project documentation
-├── CLOUDINARY_SETUP.md              # Cloudinary integration guide
-├── LAZY_LOADING_IMPLEMENTATION.md   # Lazy loading technical documentation
+├── README.md                                # This file - comprehensive project documentation
+├── CLOUDINARY_SETUP.md                      # Cloudinary integration guide
+├── LAZY_LOADING_IMPLEMENTATION.md           # Lazy loading technical documentation
+├── DESIGN_PATTERNS_GUIDE.md                 # Design patterns implementation guide
+├── BUSINESS_BOOKING_IMPLEMENTATION.md       # Booking system documentation
 │
 ├── backend/
-│   ├── .env                         # Environment variables (not in git)
-│   ├── app.py                       # Flask application entry point
-│   ├── config.py                    # Configuration management (thread-safe Singleton)
-│   ├── requirements.txt             # Python dependencies
-│   ├── utils.py                     # Utility functions (email, captcha, Cloudinary)
+│   ├── .env                                 # Environment variables (not in git)
+│   ├── app.py                               # Flask application entry point
+│   ├── config.py                            # Configuration management (thread-safe Singleton)
+│   ├── requirements.txt                     # Python dependencies (Werkzeug==2.3.7 pinned)
+│   ├── utils.py                             # Utility functions (email, captcha, Cloudinary)
 │   │
-│   ├── controllers/                # Business logic layer
-│   │   ├── booking_controller.py
-│   │   ├── business_controller.py
-│   │   └── user_controller.py
+│   ├── controllers/                        # Business logic layer
+│   │   ├── booking_controller.py           # Booking CRUD with state machine
+│   │   ├── business_controller.py          # Business/Service CRUD with Cloudinary
+│   │   └── user_controller.py              # User operations
 │   │
-│   ├── database/                   # Database connection
-│   │   ├── queries.py
-│   │   └── singleton_db.py         # Singleton pattern
+│   ├── database/                           # Database connection
+│   │   ├── queries.py                      # Common queries
+│   │   └── singleton_db.py                 # Singleton pattern with thread safety
 │   │
-│   ├── models/                     # Data models (MongoEngine)
-│   │   ├── booking.py
-│   │   ├── business.py
-│   │   └── user.py
+│   ├── models/                             # Data models (MongoEngine)
+│   │   ├── booking.py                      # Booking with state machine
+│   │   ├── business.py                     # Business and Service models
+│   │   └── user.py                         # User with Flask-Login (strict=False)
 │   │
-│   ├── patterns/                   # Design pattern implementations
-│   │   ├── auth_strategy.py        # Strategy pattern
-│   │   ├── captcha_factory.py      # Factory pattern
-│   │   ├── decorator_auth.py       # Decorator pattern
-│   │   ├── observer_auth.py        # Observer pattern
-│   │   └── observer_booking.py     # Observer pattern
+│   ├── patterns/                           # Design pattern implementations
+│   │   ├── auth_strategy.py                # Strategy pattern for verification
+│   │   ├── captcha_factory.py              # Factory pattern for CAPTCHA types
+│   │   ├── cloudinary_adapter.py           # Adapter pattern for image uploads
+│   │   ├── command_booking.py              # Command pattern for booking operations
+│   │   ├── decorator_auth.py               # Decorator pattern for auth
+│   │   ├── factory_business.py             # Factory for business creation
+│   │   ├── factory_category.py             # Factory for 12 service categories
+│   │   ├── factory_service.py              # Factory for service creation
+│   │   ├── observer_auth.py                # Observer for auth notifications
+│   │   └── observer_booking.py             # Observer for booking notifications
 │   │
-│   └── views/                      # Route handlers (Flask Blueprints)
-│       ├── auth.py                 # Authentication routes
-│       ├── booking.py              # Booking routes
-│       ├── business.py             # Business routes
-│       └── home.py                 # Home page routes
+│   ├── scripts/                            # Utility scripts
+│   │   ├── seed_data.py                    # Database seeding (5 businesses)
+│   │   ├── drop_phone_index.py             # Fix phone index issues
+│   │   └── fix_user_phones.py              # Update null phone values
+│   │
+│   └── views/                              # Route handlers (Flask Blueprints)
+│       ├── auth.py                         # Authentication routes
+│       ├── booking.py                      # Booking routes with current_user.user_id
+│       ├── business.py                     # Business routes
+│       ├── home.py                         # Home, category, services, profile routes
+│       └── admin.py                        # Admin panel (session-based)
 │
-└── frontend/                       # HTML templates
-    ├── profile.html                # User profile with image upload
-    └── Home/
-        └── home.html               # Landing page
-    └── Auth/
-        ├── login.html              # Login with CAPTCHA
-        ├── register.html           # Registration with verification
-        ├── forgot.html             # Password reset request
-        ├── reset.html              # Password reset confirmation
-        └── verify_register.html    # Email verification page
+└── frontend/                               # HTML templates
+    ├── about.html                          # About Us page
+    ├── services.html                       # Browse services with filters
+    ├── profile.html                        # User profile with image upload
+    ├── business_detail.html                # Business details and booking
+    ├── category_list.html                  # Category-filtered businesses
+    ├── my_bookings.html                    # Customer booking history
+    │
+    ├── Home/
+    │   ├── landing.html                    # Landing page with 5 categories
+    │   ├── home.html                       # Home dashboard
+    │   └── dashboard.html                  # User dashboard
+    │
+    ├── Auth/
+    │   ├── login.html                      # Login with CAPTCHA
+    │   ├── register_v2.html                # Registration with verification
+    │   ├── forgot.html                     # Password reset request
+    │   ├── reset.html                      # Password reset confirmation
+    │   ├── verify_register.html            # Email verification page
+    │   └── captcha.html                    # CAPTCHA display
+    │
+    └── admin/
+        ├── login.html                      # Admin login
+        ├── dashboard.html                  # Admin statistics
+        ├── users.html                      # User management
+        ├── user_detail.html                # User details
+        ├── businesses.html                 # Business management
+        ├── business_detail.html            # Business details
+        ├── bookings.html                   # Booking management
+        └── booking_detail.html             # Booking details
 ```
 
 ---
-http://127.0.0.1:5000/admin/login
+
 ## Features
 
 ### Authentication & Authorization
@@ -378,29 +411,32 @@ CLOUDINARY_API_SECRET=your-api-secret
 
 **Security Note:** Never commit `.env` file to version control. Add it to `.gitignore`.
 
-### 5. Fix MongoDB Index Issue (if needed)
+### 5. Seed the Database (Optional)
+If you want sample data to test with:
+```powershell
+# From backend/ directory
+python scripts/seed_data.py
+```
+
+This will create 5 businesses with services across different categories.
+
+### 6. Fix MongoDB Index Issue (if needed)
 If you encounter a duplicate key error on the `phone` field:
 
-**Option A: Create Partial Unique Index (Recommended)**
+**Option A: Drop the Index (Recommended for Development)**
+```powershell
+# From backend/ directory
+python scripts/drop_phone_index.py
+```
+
+**Option B: Manual Fix in MongoDB Shell**
 ```javascript
 // In MongoDB shell or Compass
 use serviceDB
 db.users.dropIndex("phone_1")
-db.users.createIndex(
-  { phone: 1 },
-  { unique: true, partialFilterExpression: { phone: { $exists: true, $ne: null } } }
-)
 ```
 
-**Option B: Remove Null Phone Values**
-```javascript
-// Find and fix documents with null phone
-db.users.updateMany({ phone: null }, { $unset: { phone: "" } })
-// Or delete them
-db.users.deleteMany({ phone: null })
-```
-
-### 6. Run the Application
+### 7. Run the Application
 ```powershell
 # From backend/ directory
 python app.py
@@ -422,26 +458,28 @@ The application will be available at: `http://127.0.0.1:5000`
 #### `users`
 ```javascript
 {
-  _id: String (UUID),
+  user_id: String (UUID, primary key),
   name: String,
   email: String (unique),
-  phone: String (unique, partial index),
+  phone: String (optional, no unique constraint at model level),
   password_hash: String (bcrypt),
-  street_house: String,
-  city: String,
-  district: String,
+  street_house: String (optional),
+  city: String (optional),
+  district: String (optional),
   profile_pic_url: String (Cloudinary HTTPS URL, optional),
-  is_verified: Boolean,
+  is_email_verified: Boolean (default: false),
   created_at: DateTime,
   updated_at: DateTime
 }
 ```
+**Note:** User model has `meta = {'strict': False}` to ignore unknown fields like `profile_info` from legacy data.
 
 #### `businesses`
 ```javascript
 {
   business_id: String (UUID, primary key),
-  owner_id: String (ref: User.user_id),
+  owner_id: String (ref: User.user_id, optional - can be null),
+  owner_name: String (for non-user owners),
   name: String,
   email: String,
   phone: String,
@@ -451,13 +489,16 @@ The application will be available at: `http://127.0.0.1:5000`
   description: String,
   profile_pic_url: String (Cloudinary URL),
   gallery_urls: Array<String> (Cloudinary URLs),
-  category: String (e.g., "cleaning", "plumbing", "electric"),
+  category: String (choices: cleaning, plumbing, electric, painting, carpentry, 
+                    gardening, hvac, roofing, pest_control, appliance_repair, 
+                    locksmith, moving),
   is_active: Boolean (default: true),
   created_at: DateTime,
   updated_at: DateTime
 }
 ```
 **Indexes:** `owner_id`, `category`, `city`, `district`, `is_active`
+**Note:** `owner_id` is optional to allow businesses without registered user accounts.
 
 #### `services`
 ```javascript
@@ -524,17 +565,90 @@ The application will be available at: `http://127.0.0.1:5000`
 
 **Fix Applied:** Added flash message rendering blocks to all templates with Bootstrap alert styling.
 
-### Issue 4: Werkzeug 3.x Import Error
-**Cause:** Flask-Login 0.6.2 expects `werkzeug.urls.url_decode` which was removed in Werkzeug 3.x.
+### Issue 4: Werkzeug Version Compatibility
+**Cause:** Flask-Login 0.6.2 expects `werkzeug.urls.url_decode` which was removed in Werkzeug 3.x. Initial requirements had `Werkzeug>=2.3.7` which allowed installation of incompatible 3.x versions.
 
-**Fix Applied:** Downgraded to Flask 2.3.3 and Werkzeug 2.3.6 in `requirements.txt`.
+**Fix Applied:** 
+- Pinned exact version: `Werkzeug==2.3.7` in `requirements.txt`
+- Ensures Flask 2.3.3 and Flask-Login compatibility
+- Prevents future breaking changes from Werkzeug 3.x
 
-### Issue 5: DuplicateKeyError on `phone` Index
-**Cause:** Multiple documents with `phone: null` and a unique index on `phone`.
+### Issue 5: Missing Import Error - `get_business_by_id`
+**Cause:** `views/home.py` attempted to import `get_business_by_id` which didn't exist in `business_controller.py`.
 
-**Fix:** Create a partial unique index that only enforces uniqueness when `phone` is not null (see Setup Instructions #5).
+**Fix Applied:** Added wrapper function `get_business_by_id()` in `business_controller.py` that calls `get_business_details()`.
 
-### Issue 6: Thread Safety in Singleton Pattern
+### Issue 6: Database Not Seeded
+**Cause:** Fresh MongoDB installation had no businesses or services data.
+
+**Fix Applied:** 
+- Created `backend/scripts/seed_data.py` to populate database
+- Successfully inserted 5 businesses across different categories:
+  - Sparkle Home Cleaning (cleaning)
+  - FlowRight Plumbing (plumbing)
+  - BrightWatt Electricals (electric)
+  - Canvas & Co. Painters (painting)
+  - GreenThumb Gardeners (gardening)
+- Each business has 1 associated service
+
+### Issue 7: Business Owner User Requirement
+**Cause:** Original design required businesses to have registered user owners (`owner_id` was mandatory).
+
+**Fix Applied:**
+- Made `owner_id` optional (default: `None`) in `business.py` model
+- Added `owner_name` field for non-user business owners
+- Updated `create_business()` to accept optional `owner_id`
+- Allows businesses to exist independently of user accounts
+
+### Issue 8: Admin Panel 404 Error
+**Cause:** Accessing `/admin` returned 404 because there was no root route on the admin blueprint.
+
+**Fix Applied:** Added `@admin_bp.route('/')` to redirect users to login page or dashboard based on authentication status.
+
+### Issue 9: DuplicateKeyError on User Phone Index
+**Cause:** Multiple User documents with `phone: null` and a unique index on the `phone` field caused MongoDB to reject insertions.
+
+**Fix Applied:**
+- Changed `User.phone` from `required=True, unique=True` to `required=False` (no unique constraint at model level)
+- Created `backend/scripts/drop_phone_index.py` to manually drop the problematic `phone_1` index
+- Added `meta = {'strict': False}` to User model to ignore unknown fields like `profile_info`
+
+### Issue 10: Admin Dashboard 500 Error - Unknown Field
+**Cause:** Some User documents in database contained `profile_info` field which wasn't defined in the User model, triggering `FieldDoesNotExist` error.
+
+**Fix Applied:**
+- Added `meta = {'strict': False}` to User model meta settings
+- Wrapped admin dashboard queries in try/except blocks
+- Convert MongoEngine querysets to lists before passing to templates
+
+### Issue 11: Category Filtering Not Working
+**Cause:** `category_list.html` used `category['id']` and `category['name']` but categories are objects from CategoryFactory, not dictionaries.
+
+**Fix Applied:** Changed template to use `category_id` (passed as parameter) and `category.display_name` (object attribute).
+
+### Issue 12: Search Function Field Name Mismatch
+**Cause:** Search route used `b.business_name` but Business model field is named `b.name`.
+
+**Fix Applied:** Updated all field references in search query to match model schema (`name`, `city`, `description`).
+
+### Issue 13: Profile/Bookings Authentication Errors
+**Cause:** Routes used `current_user.id` but Flask-Login's UserMixin returns `user_id` as the primary key.
+
+**Fix Applied:**
+- Changed all `current_user.id` to `current_user.user_id` across all views
+- Added `@login_required` decorators to profile and booking routes
+- Ensured consistent authentication checks
+
+### Issue 14: Missing Routes - Services and About Pages
+**Cause:** `/services` showed only JSON data, and `/about` page didn't exist.
+
+**Fix Applied:**
+- Created `/about` route and `frontend/about.html` template with platform information
+- Updated `/services` route to accept filter parameters (category, city, search query)
+- Created `frontend/services.html` with search/filter form and business card grid
+- Added navigation menu with authenticated user dropdown (Profile, My Bookings, Logout)
+
+### Issue 15: Thread Safety in Singleton Pattern
 **Cause:** Race conditions in Singleton `__new__` method when multiple threads access simultaneously.
 
 **Fix Applied:** 
@@ -542,7 +656,7 @@ The application will be available at: `http://127.0.0.1:5000`
 - Applied to both `SingletonDB` and `Config` classes
 - Prevents multiple instances in multi-threaded environments (production servers)
 
-### Issue 7: Hardcoded Cloudinary Credentials
+### Issue 16: Hardcoded Cloudinary Credentials
 **Cause:** Sensitive API credentials exposed in source code.
 
 **Fix Applied:**
@@ -567,15 +681,36 @@ The application will be available at: `http://127.0.0.1:5000`
 ### Home Routes
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/` | Home page |
-| GET | `/profile` | View user profile with optimized images |
+| GET | `/` | Landing page with 5 categories and 6 popular businesses |
+| GET | `/category/<category_id>` | Browse businesses by category |
+| GET | `/services` | Browse all businesses with filters (category, city, search) |
+| GET | `/profile` | View user profile with optimized images (login required) |
 | POST | `/profile/update` | Update profile with optional picture upload |
+| GET | `/my-bookings` | View customer's booking history (login required) |
+| GET | `/about` | About Us page with platform information |
+| GET | `/search` | Search businesses by name, city, or description |
 
 ### Booking Routes (`/booking`) - In Development
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET/POST | `/booking/create` | Create new booking |
 | GET | `/booking/list` | List user bookings |
+
+### Admin Routes (`/admin`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/admin` | Redirect to login or dashboard |
+| GET/POST | `/admin/login` | Admin login (username: admin, password: admin123) |
+| GET | `/admin/dashboard` | Admin dashboard with statistics |
+| GET | `/admin/users` | List all users |
+| GET | `/admin/users/<user_id>` | View user details |
+| POST | `/admin/users/<user_id>/delete` | Delete user |
+| GET | `/admin/businesses` | List all businesses |
+| GET | `/admin/businesses/<business_id>` | View business details |
+| POST | `/admin/businesses/<business_id>/delete` | Delete business |
+| GET | `/admin/bookings` | List all bookings |
+| GET | `/admin/bookings/<booking_id>` | View booking details |
+| GET | `/admin/logout` | Logout admin |
 
 ### Business Routes (`/business`) - In Development
 | Method | Endpoint | Description |
@@ -605,27 +740,41 @@ The application will be available at: `http://127.0.0.1:5000`
 
 ## Testing
 
-### Test User in Database
-```javascript
-{
-  _id: "b2567444-a2a0-4673-9a06-22f797abd525",
-  name: "kaif",
-  email: "kaif@gmail.com",
-  phone: "01971197651",
-  password_hash: "$2b$12$8KgIFRZsG2gsMomWyZwMlOmhlmGiStDWaSWl0rhWu4gMCccvF7tAy",
-  street_house: "28/4",
-  city: "mohammadpur",
-  district: "dhaka",
-  is_email_verified: false
-}
-```
+### Sample Data
+After running `python scripts/seed_data.py`, the database contains:
 
-To test login:
-1. Navigate to `http://127.0.0.1:5000/auth/login`
-2. Enter email: `kaif@gmail.com`
-3. Enter the password used during registration
-4. Select the correct captcha color (as prompted)
-5. Click "Login"
+**5 Businesses:**
+1. Sparkle Home Cleaning (Category: cleaning, City: Dhaka)
+2. FlowRight Plumbing (Category: plumbing, City: Dhaka)
+3. BrightWatt Electricals (Category: electric, City: Chittagong)
+4. Canvas & Co. Painters (Category: painting, City: Dhaka)
+5. GreenThumb Gardeners (Category: gardening, City: Sylhet)
+
+**5 Services:**
+Each business has one associated service with pricing and duration.
+
+### Test Accounts
+
+**Admin Access:**
+- URL: `http://127.0.0.1:5000/admin/login`
+- Username: `admin`
+- Password: `admin123`
+
+**User Testing:**
+1. Navigate to `http://127.0.0.1:5000/auth/register`
+2. Complete registration with email verification (PIN: 123456)
+3. Login with your credentials
+4. Browse services at `/services`
+5. Filter by category or city
+6. View business details and create bookings
+
+### Testing Workflow
+1. **Registration & Login:** Test CAPTCHA verification and email flow
+2. **Browse Services:** Navigate to `/services`, apply filters
+3. **View Business:** Click "View Details & Book" on any business card
+4. **Create Booking:** Select service, date, and time
+5. **My Bookings:** View booking history at `/my-bookings`
+6. **Admin Panel:** Login to admin and manage users/businesses/bookings
 
 ---
 
@@ -889,6 +1038,77 @@ For issues, questions, or contributions, please open an issue in the repository.
 
 ---
 
-**Last Updated:** January 15, 2025  
-**Version:** 1.0.0  
-**Status:** Active Development
+---
+
+## Development Timeline & Milestones
+
+### Phase 1: Initial Setup & Dependencies (Completed)
+- ✅ Flask application structure with blueprints
+- ✅ MongoDB integration with MongoEngine
+- ✅ Fixed Werkzeug version compatibility (pinned to 2.3.7)
+- ✅ Environment variable configuration
+
+### Phase 2: Authentication & User Management (Completed)
+- ✅ User registration with CAPTCHA and email verification
+- ✅ Login system with Flask-Login integration
+- ✅ Password reset functionality
+- ✅ Profile management with Cloudinary image uploads
+- ✅ Fixed `current_user.user_id` references across all routes
+
+### Phase 3: Business & Service Management (Completed)
+- ✅ Business model with optional owner_id
+- ✅ Service creation and management
+- ✅ Category system with 12 predefined categories
+- ✅ Image upload and gallery management via Cloudinary
+- ✅ Database seeding with 5 sample businesses
+
+### Phase 4: Frontend & Navigation (Completed)
+- ✅ Landing page with category icons (limited to 5)
+- ✅ Category filtering page
+- ✅ Services browse page with filters (category, city, search)
+- ✅ Business detail page with booking form
+- ✅ Profile and My Bookings pages with authentication
+- ✅ About Us page
+- ✅ Navigation menu with authenticated user dropdown
+
+### Phase 5: Admin Panel (Completed)
+- ✅ Session-based admin authentication
+- ✅ Dashboard with user/business/booking statistics
+- ✅ User management (view, delete)
+- ✅ Business management (view, delete)
+- ✅ Booking management
+- ✅ Fixed MongoDB index conflicts and field errors
+
+### Phase 6: Design Patterns Implementation (Completed)
+- ✅ Singleton: Database connection with thread safety
+- ✅ Factory: Category, Business, Service, CAPTCHA
+- ✅ Strategy: Authentication verification methods
+- ✅ Observer: Booking and auth notifications
+- ✅ Decorator: Authentication decorators
+- ✅ Command: Booking operations
+- ✅ Adapter: Cloudinary image service
+
+### Phase 7: Bug Fixes & Optimizations (Completed)
+- ✅ Fixed missing imports (`get_business_by_id`)
+- ✅ Fixed field name mismatches (business.name vs business_name)
+- ✅ Fixed category filtering with correct object attributes
+- ✅ Fixed search functionality with proper field references
+- ✅ Fixed authentication issues (current_user.id → current_user.user_id)
+- ✅ Fixed MongoDB duplicate key errors on phone field
+- ✅ Fixed admin panel 404 and 500 errors
+- ✅ Added strict=False to User model for legacy field compatibility
+
+### Current Status
+- 🟢 **Core Features:** Fully functional
+- 🟢 **Authentication:** Working with CAPTCHA and email verification
+- 🟢 **Business Browsing:** Complete with filters
+- 🟢 **Admin Panel:** Operational
+- 🟡 **Booking System:** State machine implemented, needs frontend integration
+- 🟡 **Payment Integration:** Pending
+- 🟡 **Real-time Notifications:** Pending
+
+---
+
+**Last Updated:** November 19, 2025  
+**Version:** 2.0.0  
+**Status:** Production Ready (Core Features)
